@@ -1,1 +1,136 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MyLife Organizer</title></head><body><h1>MyLife Organizer</h1><p>Deployment test successful.</p></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MyLife Organizer</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#718096;--accent:#5b5ce2;--line:#e6e9f0;--danger:#d64545;--shadow:0 8px 30px #17203312}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}
+.app{display:flex;min-height:100vh}.side{width:240px;background:#111827;color:white;padding:24px 16px;position:fixed;height:100vh}
+.logo{font-size:21px;font-weight:800;margin:0 10px 28px}.nav button{width:100%;background:none;border:0;color:#cbd5e1;text-align:left;padding:12px 14px;border-radius:10px;font-size:14px;cursor:pointer;margin:2px 0}.nav button.active,.nav button:hover{background:#252e41;color:#fff}
+.main{margin-left:240px;width:calc(100% - 240px);padding:28px;max-width:1400px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}.top h1{margin:0;font-size:28px}.btn{border:0;border-radius:10px;padding:11px 16px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer}.btn.secondary{background:#eef0ff;color:var(--accent)}.btn.danger{background:#fff0f0;color:var(--danger)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow)}.stat{font-size:28px;font-weight:800;margin:8px 0}.muted{color:var(--muted);font-size:13px}
+.section{margin-top:22px}.section h2{font-size:18px;margin:0 0 12px}.list{display:grid;gap:10px}.item{background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px;display:flex;gap:12px;align-items:flex-start}.item.done{opacity:.55}.check{width:20px;height:20px;margin-top:2px}.grow{flex:1}.item-title{font-weight:750}.meta{font-size:12px;color:var(--muted);margin-top:4px}.tag{display:inline-block;background:#eef0ff;color:#4b4cc9;border-radius:99px;padding:4px 8px;font-size:11px;font-weight:700;margin-right:5px}.empty{text-align:center;padding:35px;color:var(--muted)}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}.toolbar input,.toolbar select{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:20px;z-index:10}.modal.show{display:flex}.dialog{background:#fff;border-radius:18px;width:min(600px,100%);padding:22px;max-height:90vh;overflow:auto}.dialog h2{margin-top:0}.form{display:grid;gap:12px}.form label{font-size:13px;font-weight:700}.form input,.form textarea,.form select{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;font:inherit}.form textarea{min-height:120px;resize:vertical}.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.locked{background:#111827;color:#fff;border-radius:16px;padding:28px;text-align:center}.lock-input{max-width:220px;margin:12px auto;display:block;padding:11px;border-radius:10px;border:0}
+@media(max-width:800px){.side{width:72px;padding:18px 8px}.logo{font-size:0}.logo:after{content:"M";font-size:22px}.nav button{font-size:0;text-align:center}.nav button:before{content:"•";font-size:22px}.main{margin-left:72px;width:calc(100% - 72px);padding:18px}.grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:500px){.grid{grid-template-columns:1fr}.top{align-items:flex-start;gap:10px;flex-direction:column}}
+
+.login{position:fixed;inset:0;background:#111827;display:flex;align-items:center;justify-content:center;padding:20px;z-index:999}.login.hidden{display:none}.login-card{background:#fff;width:min(390px,100%);padding:30px;border-radius:20px;box-shadow:0 20px 60px #0005}.login-card h1{margin:0 0 6px}.login-card p{color:#718096;margin-top:0}.login-card input{width:100%;padding:13px;margin:7px 0;border:1px solid #e6e9f0;border-radius:10px;font:inherit}.login-card button{width:100%;margin-top:10px}.login-error{color:#d64545;font-size:13px;min-height:18px}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="login" id="loginScreen"><div class="login-card"><h1>MyLife Organizer</h1><p>Sign in to continue</p><input id="loginUser" autocomplete="username" placeholder="Username"><input id="loginPass" autocomplete="current-password" type="password" placeholder="Password"><div class="login-error" id="loginError"></div><button class="btn" onclick="login()">Login</button></div></div><div class="app">
+<aside class="side"><div class="logo">MyLife Organizer</div><div class="nav">
+<button onclick="show('dashboard')" id="n-dashboard">🏠 Dashboard</button>
+<button onclick="show('reminders')" id="n-reminders">🔔 Reminders</button>
+<button onclick="show('study')" id="n-study">📚 Study</button>
+<button onclick="show('todos')" id="n-todos">✅ To-Do</button>
+<button onclick="show('diary')" id="n-diary">📔 Diary</button>
+<button onclick="show('notes')" id="n-notes">📝 Notes</button>
+<button onclick="show('privacy')" id="n-privacy">🔒 Privacy</button>
+</div></aside>
+<main class="main"><div class="top"><h1 id="title">Dashboard</h1><button class="btn" onclick="openAdd()">＋ Add</button></div><div id="content"></div></main>
+</div>
+
+<div class="modal" id="modal"><div class="dialog"><h2 id="modalTitle">Add item</h2><div class="form" id="form"></div><div class="actions"><button class="btn secondary" onclick="closeModal()">Cancel</button><button class="btn" onclick="saveItem()">Save</button></div></div></div>
+
+<script>
+const KEY='mylife-organizer-v2';
+const SUPABASE_URL='https://nbzycqweltazrubttaiq.supabase.co';
+const SUPABASE_ANON_KEY='sb_publishable__GMgo7FjG93VcU7qUHzSrA_HTxI1bM7';
+const SUPABASE_TABLE='user_data';
+const sbReady=SUPABASE_URL.startsWith('http') && !SUPABASE_URL.includes('YOUR_') && !SUPABASE_ANON_KEY.includes('YOUR_');
+const supabaseClient=sbReady?supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY):null;
+let db=JSON.parse(localStorage.getItem(KEY)||'{"reminders":[],"study":[],"todos":[],"diary":[],"notes":[],"pin":null,"locked":false}');
+let page='dashboard', editing=null, currentUser=null, syncing=false;
+function cache(){localStorage.setItem(KEY,JSON.stringify(db))}
+function persist(){cache(); syncCloud()}
+async function syncCloud(){if(!supabaseClient||!currentUser||syncing)return; syncing=true; try{await supabaseClient.from(SUPABASE_TABLE).upsert({user_id:currentUser.id,data:db,updated_at:new Date().toISOString()},{onConflict:'user_id'});}catch(e){console.warn('Cloud sync failed',e)} finally{syncing=false}}
+async function loadCloud(){if(!supabaseClient||!currentUser)return; const {data,error}=await supabaseClient.from(SUPABASE_TABLE).select('data').eq('user_id',currentUser.id).maybeSingle(); if(error){console.warn('Cloud load failed',error);return} if(data&&data.data){db=data.data;cache()} else await syncCloud();}
+function esc(s=''){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+function fmt(d){if(!d)return '';return new Date(d).toLocaleString([], {dateStyle:'medium',timeStyle:'short'})}
+const LOGIN_USER='gabriel';
+function setLoginStatus(msg,ok=false){const el=document.getElementById('loginError');el.textContent=msg;el.style.color=ok?'#238b45':'#d64545'}
+async function login(){
+ if(!supabaseClient){setLoginStatus('Cloud setup is not configured yet. Add your Supabase URL and anon key in the file.');return}
+ const u=document.getElementById('loginUser').value.trim(),p=document.getElementById('loginPass').value;
+ if(u!==LOGIN_USER){setLoginStatus('Use username: gabriel');return}
+ const email='gabriel@mylife-organizer.app';
+ const {data,error}=await supabaseClient.auth.signInWithPassword({email,password:p});
+ if(error){setLoginStatus('Login failed. Create the gabriel account in Supabase first, then use its password.');return}
+ currentUser=data.user; await loadCloud(); sessionStorage.setItem('mylife_logged_in','1'); document.getElementById('loginScreen').classList.add('hidden'); setLoginStatus('',true); show('dashboard');
+}
+async function logout(){if(supabaseClient)await supabaseClient.auth.signOut();currentUser=null;sessionStorage.removeItem('mylife_logged_in');document.getElementById('loginScreen').classList.remove('hidden')}
+async function initLogin(){if(!supabaseClient){document.getElementById('loginScreen').classList.remove('hidden');setLoginStatus('Cloud setup required: configure Supabase URL + anon key.');return} const {data}=await supabaseClient.auth.getSession(); if(data.session){currentUser=data.session.user;await loadCloud();document.getElementById('loginScreen').classList.add('hidden')}}
+function show(p){page=p; document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));document.getElementById('n-'+p).classList.add('active');document.getElementById('title').textContent=p==='todos'?'To-Do List':p[0].toUpperCase()+p.slice(1);render()}
+function render(){if((page==='diary'||page==='notes')&&db.pin&&db.locked){renderLock();return}
+ if(page==='dashboard')return dashboard(); listPage()}
+function dashboard(){
+ const r=db.reminders.filter(x=>!x.done).slice(0,5), t=db.todos.filter(x=>!x.done).slice(0,5), s=db.study.filter(x=>!x.done).slice(0,5);
+ document.getElementById('content').innerHTML=`<div class="grid">
+ <div class="card"><div class="muted">Reminders</div><div class="stat">${db.reminders.filter(x=>!x.done).length}</div><div class="muted">pending</div></div>
+ <div class="card"><div class="muted">Study</div><div class="stat">${db.study.filter(x=>!x.done).length}</div><div class="muted">pending</div></div>
+ <div class="card"><div class="muted">To-Do</div><div class="stat">${db.todos.filter(x=>!x.done).length}</div><div class="muted">tasks</div></div>
+ <div class="card"><div class="muted">Private</div><div class="stat">🔒</div><div class="muted">${db.pin?'Protected':'Not locked yet'}</div></div></div>
+ <div class="section"><h2>Upcoming reminders</h2><div class="list">${r.length?r.map(itemHTML).join(''):'<div class="empty">No upcoming reminders.</div>'}</div></div>
+ <div class="section"><h2>Today’s tasks</h2><div class="list">${t.length?t.map(itemHTML).join(''):'<div class="empty">Nothing pending.</div>'}</div></div>
+ <div class="section"><h2>Study next</h2><div class="list">${s.length?s.map(itemHTML).join(''):'<div class="empty">No study items.</div>'}</div></div>`;
+}
+function listPage(){
+ if(page==='privacy'){privacy();return}
+ const arr=db[page]||[];
+ document.getElementById('content').innerHTML=`<div class="toolbar"><input id="search" placeholder="Search..." oninput="renderList()" /><select id="filter" onchange="renderList()"><option value="all">All</option><option value="open">Open</option><option value="done">Completed</option></select></div><div class="list" id="list"></div>`;
+ renderList()
+}
+function renderList(){
+ const q=(document.getElementById('search')?.value||'').toLowerCase(), f=document.getElementById('filter')?.value||'all';
+ let arr=(db[page]||[]).filter(x=>(x.title||x.text||x.subject||'').toLowerCase().includes(q)).filter(x=>f==='all'||(f==='done'?x.done:!x.done));
+ document.getElementById('list').innerHTML=arr.length?arr.map(itemHTML).join(''):'<div class="empty">Nothing here yet. Click ＋ Add to create one.</div>'
+}
+function itemHTML(x){
+ const type=page==='study'?'Study':page==='todos'?'To-Do':page==='diary'?'Diary':page==='notes'?'Note':'Reminder';
+ return `<div class="item ${x.done?'done':''}"><input class="check" type="checkbox" ${x.done?'checked':''} onchange="toggle('${x.id}')"><div class="grow"><div class="item-title">${esc(x.title||x.subject||x.text||'Untitled')}</div><div class="meta">${x.date?fmt(x.date):''} ${x.category?` · <span class="tag">${esc(x.category)}</span>`:''}</div>${x.notes?`<div class="meta">${esc(x.notes)}</div>`:''}${x.body?`<div class="meta">${esc(x.body).slice(0,220)}</div>`:''}</div><button class="btn secondary" onclick="edit('${x.id}')">Edit</button><button class="btn danger" onclick="removeItem('${x.id}')">Delete</button></div>`
+}
+function openAdd(){editing=null; modalFor()}
+function edit(id){editing=id;modalFor()}
+function modalFor(){
+ const old=editing?(db[page]||[]).find(x=>x.id===editing):{};
+ let fields='';
+ if(page==='reminders')fields=`<label>Title<input id="f-title" value="${esc(old.title||'')}"></label><label>Category<select id="f-category"><option>Return Visit</option><option>Study</option><option>Personal</option><option>Other</option></select></label><label>Date & time<input id="f-date" type="datetime-local" value="${old.date?new Date(old.date).toISOString().slice(0,16):''}"></label><label>Repeat<select id="f-repeat"><option>None</option><option>Daily</option><option>Weekly</option><option>Monthly</option></select></label><label>Notes<textarea id="f-notes">${esc(old.notes||'')}</textarea></label>`;
+ else if(page==='study')fields=`<label>Subject / Topic<input id="f-title" value="${esc(old.subject||'')}"></label><label>Study date & time<input id="f-date" type="datetime-local" value="${old.date?new Date(old.date).toISOString().slice(0,16):''}"></label><label>Notes<textarea id="f-notes">${esc(old.notes||'')}</textarea></label>`;
+ else if(page==='todos')fields=`<label>Task<input id="f-title" value="${esc(old.title||'')}"></label><label>Due date<input id="f-date" type="datetime-local" value="${old.date?new Date(old.date).toISOString().slice(0,16):''}"></label><label>Notes<textarea id="f-notes">${esc(old.notes||'')}</textarea></label>`;
+ else fields=`<label>Title<input id="f-title" value="${esc(old.title||'')}"></label><label>Content<textarea id="f-body">${esc(old.body||'')}</textarea></label>`;
+ document.getElementById('modalTitle').textContent=editing?'Edit':'Add '+page;
+ document.getElementById('form').innerHTML=fields;document.getElementById('modal').classList.add('show');
+}
+function saveItem(){
+ const id=editing||crypto.randomUUID(), now={id,done:editing?((db[page]||[]).find(x=>x.id===id)?.done||false):false};
+ if(page==='reminders')Object.assign(now,{title:v('f-title'),category:v('f-category'),date:v('f-date'),repeat:v('f-repeat'),notes:v('f-notes')});
+ else if(page==='study')Object.assign(now,{subject:v('f-title'),date:v('f-date'),notes:v('f-notes')});
+ else if(page==='todos')Object.assign(now,{title:v('f-title'),date:v('f-date'),notes:v('f-notes')});
+ else Object.assign(now,{title:v('f-title'),body:v('f-body')});
+ db[page]=db[page]||[];const i=db[page].findIndex(x=>x.id===id);if(i>=0)db[page][i]=now;else db[page].unshift(now);persist();closeModal();render()
+}
+function v(id){return document.getElementById(id)?.value||''}
+function closeModal(){document.getElementById('modal').classList.remove('show')}
+function toggle(id){const x=(db[page]||[]).find(x=>x.id===id);if(x)x.done=!x.done;persist();render()}
+function removeItem(id){if(confirm('Delete this item?')){db[page]=db[page].filter(x=>x.id!==id);persist();render()}}
+function privacy(){
+ document.getElementById('content').innerHTML=`<div class="card"><h2>Privacy & Security</h2><p class="muted">Your data is synced to your private cloud account when Supabase is configured. A browser cache is also kept for temporary offline use.</p>
+ <div class="section"><h2>Private section lock</h2><p class="muted">${db.pin?'A PIN is set. Diary and Notes can be locked.':'Set a PIN to protect Diary and Notes.'}</p>
+ <div class="toolbar"><button class="btn secondary" onclick="logout()">Log out</button>${db.pin?'<button class="btn secondary" onclick="lockNow()">Lock now</button><button class="btn danger" onclick="clearPin()">Remove PIN</button>':'<button class="btn" onclick="setPin()">Set PIN</button>'}</div></div>
+ <div class="section"><h2>Privacy features</h2><div class="list"><div class="item"><div>🔒 <b>Private Diary & Notes</b><div class="meta">Separate protected area.</div></div></div><div class="item"><div>☁️ <b>Cloud sync</b><div class="meta">Your reminders, notes, study and to-do data sync across signed-in devices.</div></div></div><div class="item"><div>🧹 <b>Delete anytime</b><div class="meta">Remove individual entries from the app.</div></div></div></div></div></div>`
+}
+function setPin(){const p=prompt('Choose a 4–12 digit PIN:');if(!p||!/^\d{4,12}$/.test(p))return alert('Please use 4–12 digits.');db.pin=p;db.locked=true;persist();privacy()}
+function lockNow(){db.locked=true;persist();render()}
+function clearPin(){if(prompt('Enter current PIN')!==db.pin)return alert('Incorrect PIN');db.pin=null;db.locked=false;persist();privacy()}
+function renderLock(){document.getElementById('content').innerHTML=`<div class="locked"><h2>🔒 Private section locked</h2><p>Enter your PIN to open ${page}.</p><input id="unlock" class="lock-input" type="password" inputmode="numeric" placeholder="PIN"><button class="btn" onclick="unlock()">Unlock</button></div>`}
+function unlock(){if(v('unlock')===db.pin){db.locked=false;persist();render()}else alert('Incorrect PIN')}
+initLogin().then(()=>show('dashboard'));
+</script>
+</body>
+</html>
