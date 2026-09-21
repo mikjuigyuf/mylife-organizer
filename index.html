@@ -141,7 +141,7 @@ function edit(id){editing=id;modalFor()}
 function modalFor(){
  const old=editing?(db[page]||[]).find(x=>x.id===editing):{};
  let fields='';
- if(page==='alarms')fields=`<label>Alarm name<input id="f-title" value="${esc(old.title||'')}"></label><label>Alarm date & time<input id="f-date" type="datetime-local" value="${old.date?new Date(old.date).toISOString().slice(0,16):''}"></label><label>Notes<textarea id="f-notes">${esc(old.notes||'')}</textarea></label>`;
+ if(page==='alarms'){const d=old.date?new Date(old.date):null;fields=`<label>Alarm name<input id="f-title" value="${esc(old.title||'')}"></label><label>Date<input id="f-alarm-date" type="date" value="${d?d.toISOString().slice(0,10):''}"></label><label>Time<input id="f-alarm-time" type="time" value="${d?d.toISOString().slice(11,16):''}"></label><label>Notes<textarea id="f-notes">${esc(old.notes||'')}</textarea></label>`;}
  if(page==='reminders')fields=`<label>Title<input id="f-title" value="${esc(old.title||'')}"></label><label>Category<select id="f-category"><option>Return Visit</option><option>Study</option><option>Personal</option><option>Other</option></select></label><label>Date & time<input id="f-date" type="datetime-local" value="${old.date?new Date(old.date).toISOString().slice(0,16):''}"></label><label>Repeat<select id="f-repeat"><option>None</option><option>Daily</option><option>Weekly</option><option>Monthly</option></select></label><label>Notes<textarea id="f-notes">${esc(old.notes||'')}</textarea></label>`;
  else if(page==='study')fields=`<label>Subject / Topic<input id="f-title" value="${esc(old.subject||'')}"></label><label>Study date & time<input id="f-date" type="datetime-local" value="${old.date?new Date(old.date).toISOString().slice(0,16):''}"></label><label>Notes<textarea id="f-notes">${esc(old.notes||'')}</textarea></label>`;
  else if(page==='todos')fields=`<label>Task<input id="f-title" value="${esc(old.title||'')}"></label><label>Due date<input id="f-date" type="datetime-local" value="${old.date?new Date(old.date).toISOString().slice(0,16):''}"></label><label>Notes<textarea id="f-notes">${esc(old.notes||'')}</textarea></label>`;
@@ -151,7 +151,7 @@ function modalFor(){
 }
 function saveItem(){
  const id=editing||crypto.randomUUID(), now={id,done:editing?((db[page]||[]).find(x=>x.id===id)?.done||false):false};
- if(page==='alarms')Object.assign(now,{title:v('f-title'),date:v('f-date'),notes:v('f-notes')});
+ if(page==='alarms'){const ad=v('f-alarm-date'),at=v('f-alarm-time');if(!ad||!at)return alert('Please add both date and time.');Object.assign(now,{title:v('f-title'),date:ad+'T'+at,notes:v('f-notes')});}
  if(page==='reminders')Object.assign(now,{title:v('f-title'),category:v('f-category'),date:v('f-date'),repeat:v('f-repeat'),notes:v('f-notes')});
  else if(page==='study')Object.assign(now,{subject:v('f-title'),date:v('f-date'),notes:v('f-notes')});
  else if(page==='todos')Object.assign(now,{title:v('f-title'),date:v('f-date'),notes:v('f-notes')});
