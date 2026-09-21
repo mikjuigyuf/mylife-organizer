@@ -59,7 +59,7 @@ async function login(){
  const email=document.getElementById('loginUser').value.trim(),p=document.getElementById('loginPass').value;
  if(!email||!p){setLoginStatus('Enter your email and password.');return}
  const {data,error}=await supabaseClient.auth.signInWithPassword({email,password:p});
- if(error){setLoginStatus('Login failed. If this is your first time, click Create account.');return}
+ if(error){setLoginStatus('Login error: '+(error.message||'Unknown error'));return}
  currentUser=data.user; sessionStorage.setItem('mylife_logged_in','1'); setLoginStatus('Login successful!',true); document.getElementById('loginScreen').classList.add('hidden'); show('dashboard'); loadCloud().catch(e=>console.warn('Cloud sync:',e));
 }
 async function createAccount(){
