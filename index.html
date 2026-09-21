@@ -60,7 +60,7 @@ async function login(){
  if(!email||!p){setLoginStatus('Enter your email and password.');return}
  const {data,error}=await supabaseClient.auth.signInWithPassword({email,password:p});
  if(error){setLoginStatus('Login failed. If this is your first time, click Create account.');return}
- currentUser=data.user; await loadCloud(); sessionStorage.setItem('mylife_logged_in','1'); setLoginStatus('',true); document.getElementById('loginScreen').classList.add('hidden'); show('dashboard');
+ currentUser=data.user; sessionStorage.setItem('mylife_logged_in','1'); setLoginStatus('Login successful!',true); document.getElementById('loginScreen').classList.add('hidden'); show('dashboard'); loadCloud().catch(e=>console.warn('Cloud sync:',e));
 }
 async function createAccount(){
  if(!supabaseClient){setLoginStatus('Cloud setup is not configured yet.');return}
