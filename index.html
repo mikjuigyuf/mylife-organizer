@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Moro</title>
+<title>ROMO</title>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#718096;--accent:#5b5ce2;--line:#e6e9f0;--danger:#d64545;--shadow:0 8px 30px #17203312}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}
@@ -23,8 +23,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-<div class="login" id="loginScreen"><div class="login-card"><h1>Moro</h1><p>Sign in or create your account</p><input id="loginUser" autocomplete="email" type="email" placeholder="Email address"><input id="loginPass" autocomplete="current-password" type="password" placeholder="Password"><div class="login-error" id="loginError"></div><button class="btn" onclick="login()">Login</button><button class="btn secondary" onclick="createAccount()">Create account</button><button class="btn secondary" onclick="resetPassword()">Forgot password?</button></div></div><div class="app">
-<aside class="side"><div class="logo">Moro</div><div class="nav">
+<div class="login" id="loginScreen"><div class="login-card"><h1>ROMO</h1><p>Sign in or create your account</p><input id="loginUser" autocomplete="email" type="email" placeholder="Email address"><input id="loginPass" autocomplete="current-password" type="password" placeholder="Password"><div class="login-error" id="loginError"></div><button class="btn" onclick="login()">Login</button><button class="btn secondary" onclick="createAccount()">Create account</button><button class="btn secondary" onclick="resetPassword()">Forgot password?</button></div></div><div class="app">
+<aside class="side"><div class="logo">ROMO</div><div class="nav">
 <button onclick="show('dashboard')" id="n-dashboard">🏠 Dashboard</button>
 <button onclick="show('reminders')" id="n-reminders">🔔 Reminders</button>
 <button onclick="show('alarms')" id="n-alarms">⏰ Alarms</button>
@@ -125,15 +125,16 @@ function alarmButton(x){
  return '<button class="btn alarm" onclick="setAlarm(\''+x.id+'\')">⏰ Alarm</button>';
 }
 function setAlarm(id){
- const source=page==='alarms'?'alarms':'reminders'; const x=(db[source]||[]).find(r=>r.id===id);
- if(!x||!x.date)return alert('Add a date and time to this reminder first.');
+ const source=page==='alarms'?'alarms':'reminders';
+ const x=(db[source]||[]).find(r=>r.id===id);
+ if(!x||!x.date)return alert('Add a date and time to this alarm first.');
  const d=new Date(x.date), hour=d.getHours(), minutes=d.getMinutes();
- const label=x.title||'MyLife reminder';
- if(/Android/i.test(navigator.userAgent)){
-   window.location.href='intent:#Intent;action=android.intent.action.SET_ALARM;S.android.intent.extra.alarm.MESSAGE='+encodeURIComponent(label)+';i.android.intent.extra.alarm.HOUR='+hour+';i.android.intent.extra.alarm.MINUTES='+minutes+';end';
- }else{
-   alert('Your browser cannot directly open the system Alarm app on this device. On Android, use the Alarm button in Chrome.');
+ const label=x.title||'ROMO Alarm';
+ if(!/Android/i.test(navigator.userAgent)){
+   return alert('Opening the system Alarm app is supported on Android. On iPhone, use the Alarms app manually.');
  }
+ const intent='intent://set_alarm/#Intent;action=android.intent.action.SET_ALARM;S.android.intent.extra.alarm.MESSAGE='+encodeURIComponent(label)+';i.android.intent.extra.alarm.HOUR='+hour+';i.android.intent.extra.alarm.MINUTES='+minutes+';end';
+ window.location.href=intent;
 }
 function openAdd(){editing=null; modalFor()}
 function edit(id){editing=id;modalFor()}
