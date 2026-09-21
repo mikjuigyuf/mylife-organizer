@@ -23,7 +23,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-<div class="login" id="loginScreen"><div class="login-card"><h1>MyLife Organizer</h1><p>Sign in to continue</p><input id="loginUser" autocomplete="username" placeholder="Username"><input id="loginPass" autocomplete="current-password" type="password" placeholder="Password"><div class="login-error" id="loginError"></div><button class="btn" onclick="login()">Login</button></div></div><div class="app">
+<div class="login" id="loginScreen"><div class="login-card"><h1>MyLife Organizer</h1><p>Sign in or create your account</p><input id="loginUser" autocomplete="email" type="email" placeholder="Email address"><input id="loginPass" autocomplete="current-password" type="password" placeholder="Password"><div class="login-error" id="loginError"></div><button class="btn" onclick="login()">Login</button><button class="btn secondary" onclick="createAccount()">Create account</button></div></div><div class="app">
 <aside class="side"><div class="logo">MyLife Organizer</div><div class="nav">
 <button onclick="show('dashboard')" id="n-dashboard">🏠 Dashboard</button>
 <button onclick="show('reminders')" id="n-reminders">🔔 Reminders</button>
@@ -53,16 +53,27 @@ async function syncCloud(){if(!supabaseClient||!currentUser||syncing)return; syn
 async function loadCloud(){if(!supabaseClient||!currentUser)return; const {data,error}=await supabaseClient.from(SUPABASE_TABLE).select('data').eq('user_id',currentUser.id).maybeSingle(); if(error){console.warn('Cloud load failed',error);return} if(data&&data.data){db=data.data;cache()} else await syncCloud();}
 function esc(s=''){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
 function fmt(d){if(!d)return '';return new Date(d).toLocaleString([], {dateStyle:'medium',timeStyle:'short'})}
-const LOGIN_USER='gabriel';
 function setLoginStatus(msg,ok=false){const el=document.getElementById('loginError');el.textContent=msg;el.style.color=ok?'#238b45':'#d64545'}
 async function login(){
- if(!supabaseClient){setLoginStatus('Cloud setup is not configured yet. Add your Supabase URL and anon key in the file.');return}
- const u=document.getElementById('loginUser').value.trim(),p=document.getElementById('loginPass').value;
- if(u!==LOGIN_USER){setLoginStatus('Use username: gabriel');return}
- const email='gabriel@mylife-organizer.app';
+ if(!supabaseClient){setLoginStatus('Cloud setup is not configured yet.');return}
+ const email=document.getElementById('loginUser').value.trim(),p=document.getElementById('loginPass').value;
+ if(!email||!p){setLoginStatus('Enter your email and password.');return}
  const {data,error}=await supabaseClient.auth.signInWithPassword({email,password:p});
- if(error){setLoginStatus('Login failed. Create the gabriel account in Supabase first, then use its password.');return}
- currentUser=data.user; await loadCloud(); sessionStorage.setItem('mylife_logged_in','1'); document.getElementById('loginScreen').classList.add('hidden'); setLoginStatus('',true); show('dashboard');
+ if(error){setLoginStatus('Login failed. If this is your first time, click Create account.');return}
+ currentUser=data.user; await loadCloud(); sessionStorage.setItem('mylife_logged_in','1'); setLoginStatus('',true); document.getElementById('loginScreen').classList.add('hidden'); show('dashboard');
+}
+async function createAccount(){
+ if(!supabaseClient){setLoginStatus('Cloud setup is not configured yet.');return}
+ const email=document.getElementById('loginUser').value.trim(),p=document.getElementById('loginPass').value;
+ if(!email||!p){setLoginStatus('Enter an email and password first.');return}
+ if(p.length<6){setLoginStatus('Password must be at least 6 characters.');return}
+ const {data,error}=await supabaseClient.auth.signUp({email,password:p});
+ if(error){setLoginStatus(error.message);return}
+ if(data.session){
+   currentUser=data.user; await loadCloud(); sessionStorage.setItem('mylife_logged_in','1'); setLoginStatus('',true); document.getElementById('loginScreen').classList.add('hidden'); show('dashboard');
+ }else{
+   setLoginStatus('Account created. Check your email to confirm it, then log in.',true);
+ }
 }
 async function logout(){if(supabaseClient)await supabaseClient.auth.signOut();currentUser=null;sessionStorage.removeItem('mylife_logged_in');document.getElementById('loginScreen').classList.remove('hidden')}
 async function initLogin(){if(!supabaseClient){document.getElementById('loginScreen').classList.remove('hidden');setLoginStatus('Cloud setup required: configure Supabase URL + anon key.');return} const {data}=await supabaseClient.auth.getSession(); if(data.session){currentUser=data.session.user;await loadCloud();document.getElementById('loginScreen').classList.add('hidden')}}
