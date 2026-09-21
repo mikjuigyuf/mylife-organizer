@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MyLife Organizer</title>
+<title>Moro</title>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#718096;--accent:#5b5ce2;--line:#e6e9f0;--danger:#d64545;--shadow:0 8px 30px #17203312}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}
@@ -23,10 +23,11 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-<div class="login" id="loginScreen"><div class="login-card"><h1>MyLife Organizer</h1><p>Sign in or create your account</p><input id="loginUser" autocomplete="email" type="email" placeholder="Email address"><input id="loginPass" autocomplete="current-password" type="password" placeholder="Password"><div class="login-error" id="loginError"></div><button class="btn" onclick="login()">Login</button><button class="btn secondary" onclick="createAccount()">Create account</button><button class="btn secondary" onclick="resetPassword()">Forgot password?</button></div></div><div class="app">
-<aside class="side"><div class="logo">MyLife Organizer</div><div class="nav">
+<div class="login" id="loginScreen"><div class="login-card"><h1>Moro</h1><p>Sign in or create your account</p><input id="loginUser" autocomplete="email" type="email" placeholder="Email address"><input id="loginPass" autocomplete="current-password" type="password" placeholder="Password"><div class="login-error" id="loginError"></div><button class="btn" onclick="login()">Login</button><button class="btn secondary" onclick="createAccount()">Create account</button><button class="btn secondary" onclick="resetPassword()">Forgot password?</button></div></div><div class="app">
+<aside class="side"><div class="logo">Moro</div><div class="nav">
 <button onclick="show('dashboard')" id="n-dashboard">🏠 Dashboard</button>
 <button onclick="show('reminders')" id="n-reminders">🔔 Reminders</button>
+<button onclick="show('alarms')" id="n-alarms">⏰ Alarms</button>
 <button onclick="show('study')" id="n-study">📚 Study</button>
 <button onclick="show('todos')" id="n-todos">✅ To-Do</button>
 <button onclick="show('diary')" id="n-diary">📔 Diary</button>
@@ -45,7 +46,7 @@ const SUPABASE_ANON_KEY='sb_publishable__GMgo7FjG93VcU7qUHzSrA_HTxI1bM7';
 const SUPABASE_TABLE='user_data';
 const sbReady=SUPABASE_URL.startsWith('http') && !SUPABASE_URL.includes('YOUR_') && !SUPABASE_ANON_KEY.includes('YOUR_');
 const supabaseClient=sbReady?supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY):null;
-let db=JSON.parse(localStorage.getItem(KEY)||'{"reminders":[],"study":[],"todos":[],"diary":[],"notes":[],"pin":null,"locked":false}');
+let db=JSON.parse(localStorage.getItem(KEY)||'{"reminders":[],"alarms":[],"study":[],"todos":[],"diary":[],"notes":[],"pin":null,"locked":false}');
 let page='dashboard', editing=null, currentUser=null, syncing=false;
 function cache(){localStorage.setItem(KEY,JSON.stringify(db))}
 function persist(){cache(); syncCloud()}
@@ -94,16 +95,21 @@ function dashboard(){
  <div class="card"><div class="muted">Reminders</div><div class="stat">${db.reminders.filter(x=>!x.done).length}</div><div class="muted">pending</div></div>
  <div class="card"><div class="muted">Study</div><div class="stat">${db.study.filter(x=>!x.done).length}</div><div class="muted">pending</div></div>
  <div class="card"><div class="muted">To-Do</div><div class="stat">${db.todos.filter(x=>!x.done).length}</div><div class="muted">tasks</div></div>
- <div class="card"><div class="muted">Private</div><div class="stat">🔒</div><div class="muted">${db.pin?'Protected':'Not locked yet'}</div></div></div>
+ <div class="card"><div class="muted">Private</div><div class="stat">🔒</div><div class="muted">${db.pin?'Protected':'Not locked yet'}</div></div><div class="card"><div class="muted">Alarms</div><div class="stat">${(db.alarms||[]).filter(x=>!x.done).length}</div><div class="muted">scheduled</div></div></div>
  <div class="section"><h2>Upcoming reminders</h2><div class="list">${r.length?r.map(itemHTML).join(''):'<div class="empty">No upcoming reminders.</div>'}</div></div>
  <div class="section"><h2>Today’s tasks</h2><div class="list">${t.length?t.map(itemHTML).join(''):'<div class="empty">Nothing pending.</div>'}</div></div>
  <div class="section"><h2>Study next</h2><div class="list">${s.length?s.map(itemHTML).join(''):'<div class="empty">No study items.</div>'}</div></div>`;
 }
 function listPage(){
  if(page==='privacy'){privacy();return}
+ if(page==='alarms'){alarmPage();return}
  const arr=db[page]||[];
  document.getElementById('content').innerHTML=`<div class="toolbar"><input id="search" placeholder="Search..." oninput="renderList()" /><select id="filter" onchange="renderList()"><option value="all">All</option><option value="open">Open</option><option value="done">Completed</option></select></div><div class="list" id="list"></div>`;
  renderList()
+}
+function alarmPage(){
+ document.getElementById('content').innerHTML=`<div class="card"><h2>⏰ Alarms</h2><p class="muted">Create an alarm and use the Alarm button to open your device's alarm app on supported Android browsers.</p><button class="btn" onclick="openAdd()">＋ Add Alarm</button></div><div class="section"><div class="list" id="list"></div></div>`;
+ renderList();
 }
 function renderList(){
  const q=(document.getElementById('search')?.value||'').toLowerCase(), f=document.getElementById('filter')?.value||'all';
@@ -111,15 +117,15 @@ function renderList(){
  document.getElementById('list').innerHTML=arr.length?arr.map(itemHTML).join(''):'<div class="empty">Nothing here yet. Click ＋ Add to create one.</div>'
 }
 function itemHTML(x){
- const type=page==='study'?'Study':page==='todos'?'To-Do':page==='diary'?'Diary':page==='notes'?'Note':'Reminder';
+ const type=page==='study'?'Study':page==='todos'?'To-Do':page==='diary'?'Diary':page==='notes'?'Note':page==='alarms'?'Alarm':'Reminder';
  return `<div class="item ${x.done?'done':''}"><input class="check" type="checkbox" ${x.done?'checked':''} onchange="toggle('${x.id}')"><div class="grow"><div class="item-title">${esc(x.title||x.subject||x.text||'Untitled')}</div><div class="meta">${x.date?fmt(x.date):''} ${x.category?` · <span class="tag">${esc(x.category)}</span>`:''}</div>${x.notes?`<div class="meta">${esc(x.notes)}</div>`:''}${x.body?`<div class="meta">${esc(x.body).slice(0,220)}</div>`:''}</div>${alarmButton(x)}<button class="btn secondary" onclick="edit('${x.id}')">Edit</button><button class="btn danger" onclick="removeItem('${x.id}')">Delete</button></div>`
 }
 function alarmButton(x){
- if(page!=='reminders'||!x.date)return '';
+ if((page!=='reminders'&&page!=='alarms')||!x.date)return '';
  return '<button class="btn alarm" onclick="setAlarm(\''+x.id+'\')">⏰ Alarm</button>';
 }
 function setAlarm(id){
- const x=(db.reminders||[]).find(r=>r.id===id);
+ const source=page==='alarms'?'alarms':'reminders'; const x=(db[source]||[]).find(r=>r.id===id);
  if(!x||!x.date)return alert('Add a date and time to this reminder first.');
  const d=new Date(x.date), hour=d.getHours(), minutes=d.getMinutes();
  const label=x.title||'MyLife reminder';
@@ -134,6 +140,7 @@ function edit(id){editing=id;modalFor()}
 function modalFor(){
  const old=editing?(db[page]||[]).find(x=>x.id===editing):{};
  let fields='';
+ if(page==='alarms')fields=`<label>Alarm name<input id="f-title" value="${esc(old.title||'')}"></label><label>Alarm date & time<input id="f-date" type="datetime-local" value="${old.date?new Date(old.date).toISOString().slice(0,16):''}"></label><label>Notes<textarea id="f-notes">${esc(old.notes||'')}</textarea></label>`;
  if(page==='reminders')fields=`<label>Title<input id="f-title" value="${esc(old.title||'')}"></label><label>Category<select id="f-category"><option>Return Visit</option><option>Study</option><option>Personal</option><option>Other</option></select></label><label>Date & time<input id="f-date" type="datetime-local" value="${old.date?new Date(old.date).toISOString().slice(0,16):''}"></label><label>Repeat<select id="f-repeat"><option>None</option><option>Daily</option><option>Weekly</option><option>Monthly</option></select></label><label>Notes<textarea id="f-notes">${esc(old.notes||'')}</textarea></label>`;
  else if(page==='study')fields=`<label>Subject / Topic<input id="f-title" value="${esc(old.subject||'')}"></label><label>Study date & time<input id="f-date" type="datetime-local" value="${old.date?new Date(old.date).toISOString().slice(0,16):''}"></label><label>Notes<textarea id="f-notes">${esc(old.notes||'')}</textarea></label>`;
  else if(page==='todos')fields=`<label>Task<input id="f-title" value="${esc(old.title||'')}"></label><label>Due date<input id="f-date" type="datetime-local" value="${old.date?new Date(old.date).toISOString().slice(0,16):''}"></label><label>Notes<textarea id="f-notes">${esc(old.notes||'')}</textarea></label>`;
@@ -143,6 +150,7 @@ function modalFor(){
 }
 function saveItem(){
  const id=editing||crypto.randomUUID(), now={id,done:editing?((db[page]||[]).find(x=>x.id===id)?.done||false):false};
+ if(page==='alarms')Object.assign(now,{title:v('f-title'),date:v('f-date'),notes:v('f-notes')});
  if(page==='reminders')Object.assign(now,{title:v('f-title'),category:v('f-category'),date:v('f-date'),repeat:v('f-repeat'),notes:v('f-notes')});
  else if(page==='study')Object.assign(now,{subject:v('f-title'),date:v('f-date'),notes:v('f-notes')});
  else if(page==='todos')Object.assign(now,{title:v('f-title'),date:v('f-date'),notes:v('f-notes')});
