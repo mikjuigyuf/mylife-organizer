@@ -91,7 +91,7 @@ function render(){if((page==='diary'||page==='notes')&&db.pin&&db.locked){render
  if(page==='dashboard')return dashboard(); listPage()}
 function dashboard(){
  const r=db.reminders.filter(x=>!x.done).slice(0,5), t=db.todos.filter(x=>!x.done).slice(0,5), s=db.study.filter(x=>!x.done).slice(0,5);
- document.getElementById('content').innerHTML=`<div class="grid">
+ document.getElementById('content').innerHTML=`<div class="card" style="margin-bottom:22px"><div class="muted">📖 JW.ORG — Daily Text</div><h2 style="margin:8px 0">Monday, September 21</h2><div style="font-size:20px;line-height:1.5;font-weight:700">“Make sure of all things.”</div><div class="muted" style="margin-top:8px">— 1 Thessalonians 5:21</div><a class="btn secondary" style="display:inline-block;margin-top:14px;text-decoration:none" href="https://wol.jw.org/en/wol/dt/r1/lp-e/2026/9/21" target="_blank" rel="noopener">Read today's Daily Text on JW.ORG</a></div><div class="grid">
  <div class="card"><div class="muted">Reminders</div><div class="stat">${db.reminders.filter(x=>!x.done).length}</div><div class="muted">pending</div></div>
  <div class="card"><div class="muted">Study</div><div class="stat">${db.study.filter(x=>!x.done).length}</div><div class="muted">pending</div></div>
  <div class="card"><div class="muted">To-Do</div><div class="stat">${db.todos.filter(x=>!x.done).length}</div><div class="muted">tasks</div></div>
